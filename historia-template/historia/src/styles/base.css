@@ -1,0 +1,91 @@
+/* ---- tokens ------------------------------------------------------- */
+:root {
+  --ink: #14100e;
+  --ink-soft: #2a221e;
+  --paper: #e6d9bd;
+  --paper-bright: #f5edda;
+  --vermilion: #b23a2e;
+  --gold: #c9a227;
+  --indigo: #26344f;
+
+  --serif: 'Cormorant Garamond', 'Iowan Old Style', Georgia, serif;
+  --sans: 'Zen Kaku Gothic New', 'Hiragino Sans', 'Segoe UI', system-ui, sans-serif;
+
+  --stage-w: min(100vw, calc(100vh * 16 / 9));
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---- buttons ------------------------------------------------------ */
+.btn {
+  appearance: none;
+  border: 1px solid rgba(230, 217, 189, 0.45);
+  background: transparent;
+  color: var(--paper-bright);
+  font-family: var(--sans);
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+  padding: 0.7em 1.6em;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  transition: background 140ms ease, color 140ms ease, border-color 140ms ease;
+}
+
+.btn:hover {
+  background: rgba(230, 217, 189, 0.12);
+}
+
+.btn-lead {
+  background: var(--vermilion);
+  border-color: var(--vermilion);
+  box-shadow: 4px 4px 0 rgba(20, 16, 14, 0.55);
+}
+
+.btn-lead:hover {
+  background: #c8483a;
+  border-color: #c8483a;
+}
+
+.btn-quiet {
+  border-color: rgba(230, 217, 189, 0.25);
+  color: rgba(245, 237, 218, 0.8);
+}
+
+.btn-small {
+  padding: 0.45em 1.2em;
+  font-size: 0.85rem;
+}
+
+:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

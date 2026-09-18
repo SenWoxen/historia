@@ -1,0 +1,11 @@
+=== ERRORS ===
+(none)
+
+=== WARNINGS ===
+prolog/pembuka: line terlalu panjang (117): "Jadi ada faktor dari dalam dan faktor dari luar. Pertanyaann..."
+ep1/pembuka: line terlalu panjang (125): "Dr. Wahidin percaya pendidikan harus diusahakan dari atas: l..."
+final/pembuka: line terlalu panjang (118): "Semua jalan yang kita telusuri — Budi Utomo, Sarekat Islam, ..."
+character 'aoi' tidak dipakai di story mana pun
+character 'ren' tidak dipakai di story mana pun
+character 'keeper' tidak dipakai di story mana pun
+character 'wakilwanita' tidak dipakai di story mana pun

@@ -1,0 +1,705 @@
+/* ---- stage shell --------------------------------------------------- */
+.stage {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  cursor: pointer;
+  background: #0b0908;
+  user-select: none;
+}
+
+.bg {
+  position: absolute;
+  inset: 0;
+  animation: bg-in 700ms ease both;
+  transition: opacity 500ms ease;
+}
+
+.bg[data-hidden='true'] {
+  opacity: 0;
+}
+
+.bg-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.bg-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse at 50% 42%,
+    transparent 40%,
+    rgba(11, 9, 8, 0.72) 100%
+  );
+}
+
+@keyframes bg-in {
+  from {
+    opacity: 0;
+    transform: scale(1.03);
+  }
+}
+
+/* ---- cast ---------------------------------------------------------- */
+.cast {
+  position: absolute;
+  inset: 0;
+}
+
+.sprite {
+  position: absolute;
+  bottom: 20%;
+  height: 74%;
+  width: auto;
+  transition: filter 260ms ease, opacity 260ms ease, transform 320ms ease;
+  animation: sprite-enter 420ms cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+
+.sprite svg {
+  height: 100%;
+  width: auto;
+  display: block;
+  filter: drop-shadow(0 18px 26px rgba(0, 0, 0, 0.5));
+}
+
+.at-left {
+  left: 4%;
+}
+.at-center {
+  left: 50%;
+  transform: translateX(-50%);
+}
+.at-right {
+  right: 4%;
+}
+
+.sprite.is-flipped svg {
+  transform: scaleX(-1);
+}
+
+.sprite.is-dim {
+  filter: brightness(0.55) saturate(0.7);
+}
+
+.sprite.is-dim.at-center {
+  transform: translateX(-50%) scale(0.97);
+}
+
+.sprite.is-dim:not(.at-center) {
+  transform: scale(0.97);
+}
+
+/* PNG sprite: fills the same bounding box as the SVG variant.
+   idle gets breathing animation; talking gets a faster breathe + the
+   existing talking filter from the parent (see below). */
+.sprite-img {
+  height: 100%;
+  width: auto;
+  display: block;
+  object-fit: contain;
+  pointer-events: none;
+  filter: drop-shadow(0 18px 26px rgba(0, 0, 0, 0.5));
+}
+
+.sprite.is-idle .sprite-img {
+  animation: breathe 4.2s ease-in-out infinite;
+}
+
+.sprite.is-talking .sprite-img {
+  animation: breathe 3s ease-in-out infinite;
+}
+
+/* idle: slow breathing + blinking */
+.sprite.is-idle svg {
+  animation: breathe 4.2s ease-in-out infinite;
+}
+
+.sprite-eyes {
+  transform-origin: center 182px;
+  animation: blink 6s steps(1, end) infinite;
+}
+
+/* talking: mouth opens and closes, character sits slightly forward */
+.sprite.is-talking .sprite-mouth {
+  transform-origin: 210px 232px;
+  animation: talk 260ms ease-in-out infinite alternate;
+}
+
+.sprite.is-talking svg {
+  animation: breathe 3s ease-in-out infinite;
+}
+
+@keyframes sprite-enter {
+  from {
+    opacity: 0;
+    filter: blur(2px);
+  }
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    transform: translateY(0) scaleX(1);
+  }
+  50% {
+    transform: translateY(-0.8%) scaleX(1.004);
+  }
+}
+
+@keyframes blink {
+  0%,
+  92%,
+  100% {
+    transform: scaleY(1);
+  }
+  95% {
+    transform: scaleY(0.08);
+  }
+}
+
+@keyframes talk {
+  from {
+    transform: scaleY(0.35);
+  }
+  to {
+    transform: scaleY(1.25);
+  }
+}
+
+/* ---- hud ----------------------------------------------------------- */
+.hud {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  padding: 0.9rem clamp(1rem, 3vw, 2.2rem);
+  background: linear-gradient(rgba(11, 9, 8, 0.88), rgba(11, 9, 8, 0.4) 70%, transparent);
+  border-bottom: 1px solid rgba(201, 162, 39, 0.12);
+  cursor: default;
+}
+
+.hud-back {
+  appearance: none;
+  background: none;
+  border: none;
+  color: rgba(245, 237, 218, 0.7);
+  font-family: var(--sans);
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 0.3rem 0;
+}
+
+.hud-back:hover {
+  color: var(--paper-bright);
+}
+
+.hud-ai {
+  appearance: none;
+  background: rgba(201, 162, 39, 0.12);
+  border: 1px solid rgba(201, 162, 39, 0.35);
+  color: var(--gold);
+  font-family: var(--sans);
+  font-size: 0.8rem;
+  cursor: pointer;
+  padding: 0.35em 0.9em;
+  letter-spacing: 0.06em;
+  transition: background 140ms ease, border-color 140ms ease;
+}
+
+.hud-ai:hover {
+  background: rgba(201, 162, 39, 0.22);
+  border-color: var(--gold);
+}
+
+.hud-title {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  font-family: var(--serif);
+  font-size: 1.15rem;
+  color: var(--paper-bright);
+}
+
+.hud-num {
+  color: var(--gold);
+  font-style: italic;
+  font-size: 0.95rem;
+}
+
+.hud-progress {
+  flex: 1;
+  max-width: 14rem;
+  margin-left: auto;
+  height: 2px;
+  background: rgba(230, 217, 189, 0.2);
+}
+
+.hud-progress span {
+  display: block;
+  height: 100%;
+  background: var(--gold);
+  transform-origin: left;
+  transition: transform 300ms ease;
+}
+
+/* ---- dialogue panel ------------------------------------------------ */
+.panel {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(1rem, 3vh, 2.5rem);
+  transform: translateX(-50%);
+  width: min(52rem, 70vw);
+  z-index: 5;
+}
+
+.dialogue {
+  position: relative;
+  background: linear-gradient(rgba(20, 16, 14, 0.93), rgba(28, 22, 19, 0.93));
+  border: 1px solid rgba(201, 162, 39, 0.35);
+  padding: 1.9rem clamp(1.4rem, 3vw, 2.6rem) 2.2rem;
+  min-height: 9.5rem;
+  backdrop-filter: blur(3px);
+}
+
+.dialogue::before {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  border: 1px solid rgba(201, 162, 39, 0.16);
+  pointer-events: none;
+}
+
+.dialogue::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1.2rem;
+  height: 1.2rem;
+  border-top: 2px solid var(--vermilion);
+  border-left: 2px solid var(--vermilion);
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.dialogue-name {
+  position: absolute;
+  top: -1.05rem;
+  left: 1.6rem;
+  background: var(--plate, var(--vermilion));
+  color: var(--paper-bright);
+  font-family: var(--serif);
+  font-size: 1.15rem;
+  letter-spacing: 0.04em;
+  padding: 0.2em 1.4em;
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.45);
+}
+
+.dialogue-text {
+  margin: 0;
+  font-size: clamp(1.02rem, 1.5vw, 1.25rem);
+  line-height: 1.85;
+  max-width: 62ch;
+  color: var(--paper-bright);
+}
+
+.is-narration .dialogue-text {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: clamp(1.15rem, 1.7vw, 1.45rem);
+  color: rgba(230, 217, 189, 0.86);
+}
+
+.caret {
+  display: inline-block;
+  width: 0.55em;
+  height: 1.05em;
+  margin-left: 0.12em;
+  vertical-align: -0.16em;
+  background: var(--gold);
+  animation: caret 700ms steps(1, end) infinite;
+}
+
+.caret[data-hidden='true'] {
+  display: none;
+}
+
+@keyframes caret {
+  50% {
+    opacity: 0;
+  }
+}
+
+.dialogue-next {
+  position: absolute;
+  right: 1.6rem;
+  bottom: 0.7rem;
+  font-size: 0.75rem;
+  color: rgba(201, 162, 39, 0.75);
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+
+.dialogue-next[data-ready='true'] {
+  opacity: 1;
+  animation: nudge 1.6s ease-in-out infinite;
+}
+
+@keyframes nudge {
+  50% {
+    transform: translateY(2px);
+  }
+}
+
+/* ---- choices ------------------------------------------------------- */
+.choices {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.choice {
+  position: relative;
+  width: min(34rem, 100%);
+  text-align: left;
+  appearance: none;
+  cursor: pointer;
+  font-family: var(--serif);
+  font-size: clamp(1.05rem, 1.6vw, 1.3rem);
+  color: var(--paper-bright);
+  background: rgba(20, 16, 14, 0.9);
+  border: 1px solid rgba(201, 162, 39, 0.45);
+  padding: 1rem 1.4rem 1rem 3rem;
+  transition: background 160ms ease, border-color 160ms ease, transform 160ms ease;
+  animation: choice-in 300ms ease both;
+  animation-delay: calc(var(--i) * 70ms);
+}
+
+.choice-mark {
+  position: absolute;
+  left: 1.2rem;
+  top: 50%;
+  width: 0.55rem;
+  height: 0.55rem;
+  margin-top: -0.28rem;
+  background: var(--gold);
+  transform: rotate(45deg);
+  transition: background 160ms ease;
+}
+
+.choice:hover {
+  background: rgba(178, 58, 46, 0.85);
+  border-color: var(--vermilion);
+  transform: translateX(4px);
+}
+
+.choice:hover .choice-mark {
+  background: var(--paper-bright);
+}
+
+@keyframes choice-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+/* ---- ending -------------------------------------------------------- */
+.ending {
+  text-align: center;
+  background: rgba(20, 16, 14, 0.9);
+  border: 1px solid rgba(201, 162, 39, 0.35);
+  padding: 2rem 1.5rem;
+}
+
+.ending-mark {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 1.6rem;
+  margin: 0 0 1.4rem;
+  color: var(--gold);
+}
+
+.ending-actions {
+  display: flex;
+  gap: 0.8rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* ---- small screens -------------------------------------------------- */
+@media (max-width: 720px) {
+  .sprite {
+    height: 52%;
+    bottom: 28%;
+  }
+  .at-left {
+    left: -4%;
+  }
+  .at-right {
+    right: -4%;
+  }
+  .dialogue {
+    min-height: 8rem;
+    padding: 1.7rem 1.1rem 1.9rem;
+  }
+  .hud-title {
+    font-size: 1rem;
+  }
+  .hud-progress {
+    max-width: 5rem;
+  }
+}
+
+@media (max-height: 520px) {
+  .sprite {
+    height: 66%;
+    bottom: 26%;
+  }
+}
+
+/* ---- pati ai ------------------------------------------------------- */
+.pati-ai {
+  position: relative;
+  display: inline-block;
+  width: min(320px, 70vw);
+  aspect-ratio: 1 / 1;
+}
+
+.pati-ai-sprite {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+.pati-ai-sprite img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  filter: drop-shadow(0 18px 26px rgba(0, 0, 0, 0.5));
+}
+
+.pati-ai.is-idle .pati-ai-sprite img {
+  animation: ai-breathe-idle 4.2s ease-in-out infinite;
+}
+
+.pati-ai.is-speaking .pati-ai-sprite img {
+  animation: ai-breathe-talk 3s ease-in-out infinite;
+  filter: drop-shadow(0 18px 26px rgba(0, 0, 0, 0.5)) brightness(1.05);
+}
+
+.pati-ai-aura {
+  position: absolute;
+  inset: -18%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(201, 162, 39, 0.14) 0%, rgba(38, 52, 79, 0.10) 45%, transparent 68%);
+  z-index: 0;
+  animation: ai-pulse 2.4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.pati-ai-aura::after {
+  content: '';
+  position: absolute;
+  inset: 22%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(245, 237, 218, 0.10) 0%, transparent 60%);
+  animation: ai-pulse 2.4s ease-in-out infinite reverse;
+}
+
+@keyframes ai-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.06);
+    opacity: 1;
+  }
+}
+
+@keyframes ai-breathe-idle {
+  0%,
+  100% {
+    transform: translateY(0) scaleX(1);
+  }
+  50% {
+    transform: translateY(-0.8%) scaleX(1.004);
+  }
+}
+
+@keyframes ai-breathe-talk {
+  0%,
+  100% {
+    transform: translateY(0) scaleX(1);
+  }
+  50% {
+    transform: translateY(-1%) scaleX(1.006);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pati-ai-aura,
+  .pati-ai.is-idle .pati-ai-sprite img,
+  .pati-ai.is-speaking .pati-ai-sprite img {
+    animation: none;
+  }
+}
+
+/* ---- ai chat panel ------------------------------------------------- */
+.ai-panel {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  background: rgba(11, 9, 8, 0.96);
+  backdrop-filter: blur(6px);
+}
+
+.ai-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem clamp(1rem, 3vw, 2.2rem);
+  border-bottom: 1px solid rgba(201, 162, 39, 0.18);
+}
+
+.ai-header h2 {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 1.35rem;
+  color: var(--paper-bright);
+}
+
+.ai-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.6rem;
+  padding: 1.4rem;
+  overflow: hidden;
+}
+
+.ai-pati {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.ai-pati-label {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 1rem;
+  color: var(--gold);
+  font-style: italic;
+}
+
+.ai-chat {
+  width: min(52rem, 92vw);
+  max-height: 55vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  padding: 0.2rem;
+}
+
+.ai-placeholder {
+  margin: 0;
+  color: rgba(245, 237, 218, 0.55);
+  font-style: italic;
+  text-align: center;
+}
+
+.ai-msg {
+  padding: 1rem 1.4rem;
+  border: 1px solid rgba(201, 162, 39, 0.22);
+  background: rgba(20, 16, 14, 0.88);
+}
+
+.ai-msg.user {
+  align-self: flex-end;
+  border-color: rgba(178, 58, 46, 0.35);
+}
+
+.ai-msg.assistant {
+  align-self: flex-start;
+}
+
+.ai-msg-role {
+  display: block;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 0.35rem;
+}
+
+.ai-msg p {
+  margin: 0;
+  color: var(--paper-bright);
+  line-height: 1.7;
+  font-size: clamp(1rem, 1.4vw, 1.15rem);
+}
+
+.ai-error {
+  color: #d9756a;
+  font-size: 0.95rem;
+}
+
+.ai-stop {
+  appearance: none;
+  background: rgba(178, 58, 46, 0.22);
+  border: 1px solid rgba(178, 58, 46, 0.45);
+  color: var(--paper-bright);
+  font-family: var(--sans);
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 0.5em 1.4em;
+}
+
+.ai-stop:hover {
+  background: rgba(178, 58, 46, 0.38);
+}
+
+.ai-footer {
+  display: flex;
+  gap: 0.8rem;
+  padding: 1rem clamp(1rem, 3vw, 2.2rem);
+  border-top: 1px solid rgba(201, 162, 39, 0.18);
+}
+
+.ai-footer input {
+  flex: 1;
+  appearance: none;
+  background: rgba(20, 16, 14, 0.9);
+  border: 1px solid rgba(201, 162, 39, 0.35);
+  color: var(--paper-bright);
+  font-family: var(--sans);
+  font-size: 1rem;
+  padding: 0.75em 1em;
+}
+
+.ai-footer input:focus {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+.ai-dialogue-preview {
+  padding: 0 1rem 1rem;
+}
