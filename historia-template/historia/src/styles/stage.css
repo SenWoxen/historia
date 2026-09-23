@@ -626,6 +626,14 @@
   text-align: center;
 }
 
+.ai-loading {
+  margin: 0;
+  color: var(--gold);
+  font-style: italic;
+  text-align: center;
+  opacity: 0.8;
+}
+
 .ai-msg {
   padding: 1rem 1.4rem;
   border: 1px solid rgba(201, 162, 39, 0.22);
@@ -702,4 +710,10 @@
 
 .ai-dialogue-preview {
   padding: 0 1rem 1rem;
+}
+
+.ending-sub {
+  margin: 0.2rem 0 1rem;
+  color: rgba(230, 217, 189, 0.8);
+  font-style: italic;
 }

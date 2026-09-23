@@ -1,11 +1,15 @@
-import { useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import Background from '../art/backgrounds'
 import Sprite from '../art/sprites'
 import DialogueBox from './DialogueBox'
 import Choices from './Choices'
+import Quiz from './Quiz'
+import QuizReview from './QuizReview'
 import useStory from '../engine/useStory'
 import useTypewriter from '../hooks/useTypewriter'
 import { getCharacter } from '../data/characters'
+import { getQuiz } from '../data/quizzes'
+import '../styles/quiz.css'
 
 export default function Scene({ episodeId, onExit, onOpenAi }) {
   const story = useStory(episodeId)
@@ -15,8 +19,22 @@ export default function Scene({ episodeId, onExit, onOpenAi }) {
   const speaker = speakerId ? getCharacter(speakerId) : null
   const { shown, done, skip } = useTypewriter(line?.text ?? '')
 
-  // One tap does the obvious thing: finish the line, then move on.
+  const [quizOpen, setQuizOpen] = useState(false)
+  const [reviewOpen, setReviewOpen] = useState(false)
+  const [quizPrompted, setQuizPrompted] = useState(false)
+
+  const quiz = getQuiz(episodeId)
+  const hasQuiz = !!quiz
+
+  useEffect(() => {
+    if (finished && hasQuiz && !quizPrompted && !quizOpen) {
+      setQuizPrompted(true)
+      setQuizOpen(true)
+    }
+  }, [finished, hasQuiz, quizPrompted, quizOpen])
+
   const tap = () => {
+    if (quizOpen || reviewOpen) return
     if (choices || finished) return
     if (!done) skip()
     else story.advance()
@@ -24,8 +42,13 @@ export default function Scene({ episodeId, onExit, onOpenAi }) {
 
   useEffect(() => {
     const onKey = (e) => {
-      if (e.key === 'Escape') onExit()
+      if (e.key === 'Escape') {
+        if (reviewOpen) setReviewOpen(false)
+        else if (quizOpen) setQuizOpen(false)
+        else onExit()
+      }
       if (e.key === ' ' || e.key === 'Enter') {
+        if (quizOpen || reviewOpen) return
         e.preventDefault()
         tap()
       }
@@ -69,13 +92,44 @@ export default function Scene({ episodeId, onExit, onOpenAi }) {
         </div>
       </header>
 
+      {reviewOpen ? (
+        <QuizReview episodeId={episodeId} onClose={() => setReviewOpen(false)} />
+      ) : quizOpen ? (
+        <Quiz
+          episodeId={episodeId}
+          onClose={() => setQuizOpen(false)}
+          onReview={() => setReviewOpen(true)}
+        />
+      ) : null}
+
       <footer className="panel">
-        {finished ? (
+        {finished && !quizOpen ? (
           <div className="ending">
             <p className="ending-mark">End of episode {episode.number}</p>
+            <p className="ending-sub">Apakah kamu ingin menguji ingatanmu?</p>
             <div className="ending-actions">
-              <button className="btn" onClick={(e) => { e.stopPropagation(); story.restart() }}>
-                Read again
+              {hasQuiz && (
+                <button
+                  className="btn btn-lead"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setQuizOpen(true)
+                  }}
+                >
+                  Mulai Quiz
+                </button>
+              )}
+              <button
+                className="btn"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  story.restart()
+                  setQuizPrompted(false)
+                  setQuizOpen(false)
+                  setReviewOpen(false)
+                }}
+              >
+                Baca lagi
               </button>
               <button className="btn btn-quiet" onClick={(e) => { e.stopPropagation(); onExit() }}>
                 Back to episodes
@@ -85,12 +139,7 @@ export default function Scene({ episodeId, onExit, onOpenAi }) {
         ) : choices ? (
           <Choices options={choices} onPick={story.choose} />
         ) : (
-          <DialogueBox
-            speaker={speaker}
-            text={shown}
-            done={done}
-            narration={speakerId === 'narrator'}
-          />
+          <DialogueBox speaker={speaker} text={shown} done={done} narration={speakerId === 'narrator'} />
         )}
       </footer>
     </div>
