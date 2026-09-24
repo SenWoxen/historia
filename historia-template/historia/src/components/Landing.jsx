@@ -11,24 +11,43 @@ export default function Landing({ onPlay, onOpenAi }) {
           <Cover />
         </div>
 
+        <p className="hero-eyebrow">Perjalanan pergerakan nasional Indonesia</p>
+
         <div className="hero-body">
-          <p className="hero-kicker">Perjalanan pergerakan nasional Indonesia</p>
-          <h1 className="hero-title">Historia</h1>
-          <p className="hero-line">
-            Dari bangku sekolah, pasar, dan ruang diskusi kecil — Pati mengajakmu
-            menelusuri lahirnya kesadaran kebangsaan, sampai Sumpah Pemuda 1928.
-          </p>
-          <div className="hero-actions">
-            <button className="btn btn-lead" onClick={() => onPlay(episodes[0].id)}>
-              Mulai dari Prolog
-            </button>
-            <button className="btn btn-quiet" onClick={onOpenAi}>
-              Tanya Pati
-            </button>
-            <a className="btn btn-quiet" href="#episodes">
-              Lihat semua babak
-            </a>
+          <div className="hero-title-wrap">
+            <span className="hero-title-mark" aria-hidden="true" />
+            <h1 className="hero-title">Historia</h1>
           </div>
+          <p className="hero-quote">“Bangsa tidak lahir dalam satu malam.”</p>
+          <p className="hero-line">
+            Ikuti jejak gagasan, tokoh, dan peristiwa yang membawa Indonesia menuju 1928.
+          </p>
+
+          <div className="hero-actions">
+            <button className="btn btn-lead hero-cta" onClick={() => onPlay(episodes[0].id)}>
+              Mulai Perjalanan
+            </button>
+            <div className="hero-actions-secondary">
+              <button className="btn btn-quiet hero-ghost" onClick={onOpenAi}>
+                Tanya Pati
+              </button>
+              <a className="btn btn-quiet hero-ghost" href="#episodes">
+                Lihat Bab
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div className="hero-hook" aria-hidden="true">
+          Sebuah perjalanan
+          <br />
+          20 tahun menuju satu ikrar
+        </div>
+
+        <div className="hero-timeline" aria-hidden="true">
+          <span className="tl-lab">1908</span>
+          <span className="tl-track"><i /></span>
+          <span className="tl-lab">1928</span>
         </div>
 
         <div className="hero-seal" aria-hidden="true">
