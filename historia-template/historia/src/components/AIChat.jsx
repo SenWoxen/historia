@@ -5,6 +5,13 @@ import DialogueBox from './DialogueBox'
 
 const STORAGE_KEY = 'historia-ai-history'
 
+const REVEAL_STEP_MS = 40
+const REVEAL_CHARS = 3
+
+const prefersReducedMotion = () =>
+  typeof window !== 'undefined' &&
+  window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+
 export default function AIChat({ onClose }) {
   const [messages, setMessages] = useState(() => {
     try {
@@ -17,12 +24,17 @@ export default function AIChat({ onClose }) {
   const [input, setInput] = useState('')
   const [streaming, setStreaming] = useState(false)
   const [error, setError] = useState(null)
+  // `received` = the full text fetched from Gemini so far.
+  // `displayed` = the slice already revealed to the user.
+  const [received, setReceived] = useState('')
   const [displayed, setDisplayed] = useState('')
+  const [revealing, setRevealing] = useState(false)
   const abortRef = useRef(null)
   const scrollRef = useRef(null)
   const inputRef = useRef(null)
   const rafRef = useRef(null)
   const sendingRef = useRef(false)
+  const reduceMotionRef = useRef(prefersReducedMotion())
 
   useEffect(() => {
     try {
@@ -51,6 +63,30 @@ export default function AIChat({ onClose }) {
     inputRef.current?.focus()
   }, [onClose])
 
+  // Progressive reveal: advance `displayed` toward `received` at a steady,
+  // readable clip (~75 chars/s). The effect reschedules itself on every
+  // `displayed` change and on each new chunk arriving via `received`, so the
+  // animation is never waiting on the end of the stream. Reduced motion
+  // jumps straight to the received text.
+  useEffect(() => {
+    if (!received) return
+    if (displayed.length >= received.length) {
+      setRevealing(false)
+      return
+    }
+    if (reduceMotionRef.current) {
+      setDisplayed(received)
+      return
+    }
+
+    setRevealing(true)
+    const timer = setTimeout(() => {
+      const to = Math.min(displayed.length + REVEAL_CHARS, received.length)
+      setDisplayed(received.slice(0, to))
+    }, REVEAL_STEP_MS)
+    return () => clearTimeout(timer)
+  }, [received, displayed])
+
   const send = useCallback(async () => {
     const text = input.trim()
     if (!text || streaming || sendingRef.current) return
@@ -59,34 +95,33 @@ export default function AIChat({ onClose }) {
     setMessages(next)
     setInput('')
     setError(null)
+    setReceived('')
     setDisplayed('')
+    setRevealing(false)
     setStreaming(true)
     sendingRef.current = true
 
     const controller = new AbortController()
     abortRef.current = controller
 
+    let answer = ''
     try {
-      let answer = ''
-      let frame = 0
       for await (const chunk of streamChat({ messages: next, signal: controller.signal })) {
         answer += chunk
-        frame++
-        if (frame % 2 === 0) {
-          setDisplayed(answer)
-        }
+        setReceived(answer)
       }
       if (answer.trim()) {
         setMessages((m) => [...m, { role: 'assistant', content: answer }])
       }
     } catch (err) {
+      setDisplayed(answer)
+      setRevealing(false)
       if (err?.name !== 'AbortError') {
         setError('Maaf, aku sedang mengalami kendala. Coba lagi sebentar.')
       }
     } finally {
-      setDisplayed('')
-      sendingRef.current = false
       setStreaming(false)
+      sendingRef.current = false
       abortRef.current = null
     }
   }, [input, messages, streaming])
@@ -99,11 +134,21 @@ export default function AIChat({ onClose }) {
   }
 
   const handleStop = () => {
-    abortRef.current?.abort()
+    if (streaming) abortRef.current?.abort()
+    setDisplayed(received)
+    setRevealing(false)
   }
+
+  // An assistant turn is "live" while its text is still being streamed or
+  // revealed. During that window the in-flight bubble (showing `displayed`)
+  // replaces the committed tail message in the scrollback.
+  const liveTail = streaming || revealing
+  const tail = messages[messages.length - 1]
+  const list = liveTail && tail?.role === 'assistant' ? messages.slice(0, -1) : messages
 
   const lastAssistant = [...messages].reverse().find((m) => m.role === 'assistant')
   const activeText = displayed || lastAssistant?.content || ''
+  const speaking = streaming || revealing
 
   return (
     <div className="ai-panel" onClick={(e) => e.stopPropagation()}>
@@ -114,7 +159,7 @@ export default function AIChat({ onClose }) {
 
       <div className="ai-body">
         <div className="ai-pati">
-          <PatiAI speaking={streaming} />
+          <PatiAI speaking={speaking} />
           <p className="ai-pati-label">Pati</p>
         </div>
 
@@ -122,16 +167,19 @@ export default function AIChat({ onClose }) {
           {messages.length === 0 && !streaming && (
             <p className="ai-placeholder">Tanya sesuatu tentang sejarah Indonesia...</p>
           )}
-          {messages.map((m, i) => (
+          {list.map((m, i) => (
             <div key={i} className={`ai-msg ${m.role}`}>
               <span className="ai-msg-role">{m.role === 'user' ? 'Kamu' : 'Pati'}</span>
               <p>{m.content}</p>
             </div>
           ))}
-          {displayed && (
-            <div className="ai-msg assistant">
+          {displayed && liveTail && (
+            <div className="ai-msg assistant is-revealing">
               <span className="ai-msg-role">Pati</span>
-              <p>{displayed}</p>
+              <p>
+                {displayed}
+                <span className="caret" />
+              </p>
             </div>
           )}
           {streaming && !displayed && (
@@ -140,7 +188,7 @@ export default function AIChat({ onClose }) {
           {error && <p className="ai-error">{error}</p>}
         </div>
 
-        {(streaming || displayed) && (
+        {(streaming || revealing) && (
           <button className="ai-stop" onClick={handleStop}>Hentikan</button>
         )}
       </div>
@@ -152,16 +200,16 @@ export default function AIChat({ onClose }) {
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKey}
           placeholder="Tulis pertanyaan..."
-          disabled={streaming}
+          disabled={streaming || revealing}
         />
-        <button className="btn btn-lead btn-small" type="submit" disabled={streaming || !input.trim()}>
+        <button className="btn btn-lead btn-small" type="submit" disabled={streaming || revealing || !input.trim()}>
           Kirim
         </button>
       </form>
 
-      {activeText && !streaming && (
+      {activeText && !streaming && !revealing && (
         <div className="ai-dialogue-preview">
-          <DialogueBox speaker={{ name: 'Pati', color: 'var(--gold)' }} text={activeText} done={!streaming} showContinue={false} />
+          <DialogueBox speaker={{ name: 'Pati', color: 'var(--gold)' }} text={activeText} done={!speaking} showContinue={false} />
         </div>
       )}
     </div>
